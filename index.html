@@ -151,7 +151,9 @@ html[data-th="negro"] .rem input,html[data-th="naranja"] .rem input{color-scheme
 .edbar .l button{width:44px;height:44px;padding:0;display:grid;place-items:center;color:var(--ink);opacity:.8}
 .edbar .done{display:flex;align-items:center;gap:12px;font-size:15px;padding:10px 0 10px 12px}
 .edbar .done:active .cap{transform:translateX(5px);background:var(--ink);color:var(--bg)}
-.hbtn.on svg{fill:var(--acc);stroke:var(--acc)}
+.hbtn.on svg{fill:var(--hc,var(--acc));stroke:var(--hc,var(--acc))}
+html[data-th="naranja"] .hbtn.on svg,html[data-th="negro"] .hbtn.on svg{fill:currentColor;stroke:currentColor}
+svg.i.hmini{width:17px;height:17px;fill:currentColor;stroke:currentColor;stroke-width:1.2;vertical-align:-2px;margin-right:7px}
 .hbtn.pop svg{animation:hp .5s var(--spring)}
 @keyframes hp{30%{transform:scale(1.4)}}
 .spark{position:fixed;width:5px;height:5px;border-radius:50%;background:var(--or);pointer-events:none;z-index:30;animation:spark .6s var(--ease) forwards}
@@ -460,7 +462,7 @@ function render(){
 }
 function tituloDe(n){ return n.titulo || (n.texto.split("\n")[0] || (n.fotos.length ? "Foto" : "Sin título")).slice(0,60); }
 function corazon(n, cls){
-  const b = el("button",{class:(cls||"circ") + " hbtn" + (n.importante ? " on" : ""),"aria-label": n.importante ? "Quitar de importantes" : "Marcar como importante",
+  const b = el("button",{class:(cls||"circ") + " hbtn" + (n.importante ? " on" : ""),style:"--hc:" + colorCorazon(n),"aria-label": n.importante ? "Quitar de importantes" : "Marcar como importante",
     onclick:e => { e.stopPropagation(); n.importante = !n.importante; guardar(n); b.classList.toggle("on", n.importante);
       b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); if (n.importante){ chispas(b); vib(15); } }}, IC.heart());
   return b;
@@ -468,6 +470,9 @@ function corazon(n, cls){
 
 // colores claros por tipo
 // colores por tipo (puntos de la lista) y tema de fondo de cada pantalla
+const CORAZON = ["#e1502f","#5d7a6a","#141414","#f08a6c","#9a9a95"];
+const colorCorazon = n => { let h = 0; for (const ch of n.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return CORAZON[h % CORAZON.length]; };
+const corazonMini = n => { const s = IC.heart(); s.setAttribute("class","i hmini"); s.style.color = colorCorazon(n); return s; };
 const COL = {nota:"#9a9a95", lista:"#7f968a", aviso:"#e1502f", foto:"#141414", fav:"#e1502f"};
 const tipoDe = n => n.fecha ? "aviso" : n.items.length ? "lista" : n.fotos.length ? "foto" : "nota";
 const TEMA = {inicio:"gris", crear:"negro", ajustes:"salvia", nota:"gris", lista:"blanco", aviso:"naranja", foto:"negro"};
@@ -521,7 +526,7 @@ function fila(n, i){
   const ar = cap();
   return el("div",{class:"row",style:"--i:"+i,role:"button",tabindex:"0",onclick:() => ir("n-" + n.id),onkeydown:e => { if (e.key === "Enter") ir("n-" + n.id); }},
     n.fotos.length ? el("span",{class:"th"}, imgEl(n.fotos[0])) : el("span",{class:"dot" + (c && c.paso && !c.rep ? " off" : ""),style:"--c:" + COL[tipoDe(n)]}),
-    el("div",{class:"tt"}, el("b",{text:(n.importante ? "♥ " : "") + tituloDe(n)}), meta), ar);
+    el("div",{class:"tt"}, el("b",{}, n.importante ? corazonMini(n) : null, tituloDe(n)), meta), ar);
 }
 // formas tipo "galleta": r(θ) = R·(1 + a·cos(kθ)); o estrella de puntas
 function forma(k, a, estrella){
