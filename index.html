@@ -144,6 +144,14 @@ html[data-th="negro"] .rem input,html[data-th="naranja"] .rem input{color-scheme
 .rem .cal{width:100%;margin-top:12px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:99px}
 @keyframes llama{0%,100%{box-shadow:0 0 0 0 rgba(225,80,47,0)}40%{box-shadow:0 0 0 8px rgba(225,80,47,.35)}}
 .rem .cal.llama{animation:llama .9s var(--ease) 2}
+.pk{position:relative;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:14px;margin:0 -8px;padding:4px 8px;transition:background .25s}
+.pk:active{background:var(--soft)}
+.pk input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:none;padding:0}
+.pk svg{flex:0 0 auto;opacity:.75}
+.pkh{font-size:28px;font-weight:300;line-height:1.25;margin-top:6px}
+.pkh svg{width:24px;height:24px}
+.pkf{font-size:18px;line-height:1.35;margin-bottom:10px;padding-top:2px;padding-bottom:10px}
+.pkf svg{width:18px;height:18px}
 .rem .alt{display:flex;justify-content:space-between;gap:8px;margin-top:4px}
 .rem .alt button{padding:6px 0;font-size:12.5px;color:var(--muted)}
 .rem p{font-size:12.5px;color:var(--muted);margin:8px 0 0}
@@ -640,16 +648,25 @@ function vEditor(v, n){
   fIn.addEventListener("change", () => { n.fecha = fIn.value; n.enCalendario = false; guardar(n); render(); });
   hIn.addEventListener("change", () => { n.hora = hIn.value || "09:00"; n.enCalendario = false; guardar(n); render(); });
   const c = cuando(n);
-  if (c){ sr.append(el("div",{class:"big2",text:c.txt})); if (c.rep) sr.append(el("div",{class:"small muted",style:"margin:-2px 0 6px",text:"↻ " + c.rep + (n.repite === "mensual" ? " (día " + (+n.fecha.slice(8)) + ")" : "")})); }
+  // hora grande y fecha debajo: toda la zona se puede tocar para cambiarlas
+  const [hh, mm] = (n.hora || "09:00").split(":").map(Number);
+  const horaTxt = new Date(2000, 0, 1, hh, mm).toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"});
+  let fechaTxt = "Elige la fecha";
+  if (c){ const d0 = new Date(); d0.setHours(0,0,0,0); const d1 = new Date(c.d); d1.setHours(0,0,0,0); const dif = Math.round((d1 - d0)/864e5);
+    const largo = DIAS_L[c.d.getDay()] + " " + c.d.getDate() + " " + MESES_C[c.d.getMonth()] + (c.d.getFullYear() !== new Date().getFullYear() ? " " + c.d.getFullYear() : "");
+    fechaTxt = dif === 0 ? "Hoy, " + largo : dif === 1 ? "Mañana, " + largo : dif === -1 ? "Ayer, " + largo : largo.charAt(0).toUpperCase() + largo.slice(1); }
+  const chev = () => icon([["path",{d:"M6 9l6 6 6-6"}]]);
+  const abrirPk = inp => () => { try { inp.showPicker(); } catch(e){ inp.focus(); inp.click(); } };
+  sr.append(el("label",{class:"pk pkh",onclick:e => { if (e.target !== hIn){ e.preventDefault(); abrirPk(hIn)(); } }}, el("span",{text:horaTxt}), hIn));
+  sr.append(el("label",{class:"pk pkf",onclick:e => { if (e.target !== fIn){ e.preventDefault(); abrirPk(fIn)(); } }}, el("span",{text:fechaTxt}), fIn));
+  if (c && c.rep) sr.append(el("div",{class:"small muted",style:"margin:2px 0 6px",text:"↻ " + c.rep + (n.repite === "mensual" ? " (día " + (+n.fecha.slice(8)) + ")" : "")}));
   const lr = (ic, lab, ctl) => el("div",{class:"lr"}, el("span",{class:"ic"}, ic), el("span",{class:"nm",text:lab}), el("span",{class:"dots"}), ctl);
-  [lr(IC.cal(), "Fecha", fIn), lr(icon([["circle",{cx:12,cy:13,r:7}],["path",{d:"M12 9.5V13l2.5 1.5M9.5 3h5"}]]), "Hora", hIn),
-    lr(icon([["path",{d:"M4 9h13l-3-3M20 15H7l3 3"}]]), "Repetir", (() => { const sel = el("select",{"aria-label":"Repetir",class:"rsel"}, Object.entries(REPITE).map(([k,t]) => el("option",{value:k,text:t,selected:(n.repite||"")===k})));
+  [    lr(icon([["path",{d:"M4 9h13l-3-3M20 15H7l3 3"}]]), "Repetir", (() => { const sel = el("select",{"aria-label":"Repetir",class:"rsel"}, Object.entries(REPITE).map(([k,t]) => el("option",{value:k,text:t,selected:(n.repite||"")===k})));
       sel.addEventListener("change", () => { n.repite = sel.value; n.enCalendario = false; guardar(n); vib(8); render(); toast(sel.value ? "Se repetirá: " + REPITE[sel.value].toLowerCase() : "Ya no se repite"); }); return sel; })()),
     lr(icon([["path",{d:"M4 12a8 8 0 1 1 3 6.2M4 18v-4h4"}]]), "Calendario", el("span",{class:"vl",text: n.enCalendario ? "Enviado" : "Pendiente"})),
     n.fecha ? el("button",{class:"cal",onclick:() => { vib(12); alCalendario(n); }}, IC.cal(), n.enCalendario ? "Agregar de nuevo a Google Calendar" : "Agregar a Google Calendar") : null,
     el("p",{text: n.fecha ? (c && c.paso ? "Esta fecha ya pasó. " : "") + (n.enCalendario ? "Si cambias la fecha o la repetición, agrégalo otra vez." : n.repite ? "Al agregarlo, tu calendario te avisará " + REPITE[n.repite].toLowerCase() + "." : "Se abre el calendario del celular: toca Guardar y revisa que el evento tenga notificación.") : "Elige el día y la hora del aviso."}),
-    el("div",{class:"alt"},
-      el("span"),
+    el("div",{class:"alt",style:"justify-content:flex-end;gap:26px"},
       n.fecha ? el("button",{text:"Descargar .ics",onclick:() => descargarICS(n)}) : null,
       el("button",{text:"Quitar",onclick:() => { n.fecha = ""; n.enCalendario = false; guardar(n); render(); }}))].filter(Boolean).forEach(x => sr.append(x));
   v.append(sr);
