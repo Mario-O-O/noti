@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis notas</title>
+<meta name="theme-color" content="#e9e9e6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sans:"Ubuntu",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+  --or:#e1502f;
+  --bg:#e9e9e6;--ink:#141414;--muted:#7d7d78;--line:#d3d3ce;--acc:var(--or);--soft:rgba(20,20,20,.06);
+  --spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.2,.8,.2,1);
+}
+html[data-th="blanco"]{--bg:#f7f7f4;--line:#e2e2dd}
+html[data-th="salvia"]{--bg:#cfd8d3;--muted:#5d6a63;--line:#b7c3bc}
+html[data-th="naranja"]{--bg:#e1502f;--ink:#fff;--muted:rgba(255,255,255,.78);--line:rgba(255,255,255,.32);--acc:#141414;--soft:rgba(255,255,255,.14)}
+html[data-th="negro"]{--bg:#141414;--ink:#f2f2ef;--muted:#8f8f8a;--line:#2d2d2d;--acc:var(--or);--soft:rgba(255,255,255,.07)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);overscroll-behavior-y:none;overflow-x:hidden;transition:background .5s var(--ease)}
+body{margin:0;background:transparent;color:var(--ink);font:15px/1.5 var(--sans);font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:color .4s}
+.wrap{max-width:500px;margin:0 auto;padding:0 26px calc(110px + env(safe-area-inset-bottom))}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+button{font:inherit;cursor:pointer;border:none;background:transparent;color:var(--ink);border-radius:99px;padding:8px 12px;font-weight:400;position:relative;overflow:hidden;transition:transform .35s var(--spring),opacity .25s,color .3s,background .3s}
+button:active{transform:scale(.94);transition-duration:.08s}
+input,textarea,select{font:inherit;color:inherit}
+.hide{display:none!important}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.rip{position:absolute;border-radius:50%;background:currentColor;opacity:.1;transform:scale(0);pointer-events:none;animation:rip .55s var(--ease) forwards}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.it{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.01em}
+.or{color:var(--acc)}
+.cap{display:inline-grid;place-items:center;width:40px;height:26px;border:1.4px solid currentColor;border-radius:99px;flex:0 0 auto;transition:transform .45s var(--spring),background .3s,color .3s}
+.cap svg{width:18px;height:12px;stroke-width:1.6}
+.star{width:22px;height:22px;color:var(--acc);animation:spin 14s linear infinite;flex:0 0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brk{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;line-height:1.25}
+
+/* arriba */
+.bar{display:flex;justify-content:space-between;align-items:center;padding:calc(20px + env(safe-area-inset-top)) 0 0}
+.bar .r{display:flex;gap:2px}
+.ib{width:42px;height:42px;padding:0;display:grid;place-items:center;color:var(--ink)}
+.word{display:flex;align-items:center;gap:10px}
+.h1{font-size:44px;line-height:1.18;font-weight:300;letter-spacing:-.015em;margin:80px 0 26px;white-space:pre-line;animation:in .7s .1s var(--ease) both}
+.h1 .it{font-size:1.08em;letter-spacing:0}
+.big{display:flex;align-items:flex-end;gap:6px;margin:56px 0 4px;animation:in .7s var(--ease) both}
+.big .n{font-size:112px;line-height:.9;font-weight:300;letter-spacing:-.03em}
+.big .u{font-size:34px;font-weight:300;color:var(--acc);letter-spacing:0;margin:4px 0 0 6px}
+.lead{font-size:26px;line-height:1.3;margin:26px 0 30px;animation:in .7s .15s var(--ease) both}
+.go{display:flex;align-items:center;gap:16px;padding:6px 0;font-size:14.5px;text-align:left;border-radius:0;animation:in .7s .25s var(--ease) both}
+.go:active .cap,.go:hover .cap{transform:translateX(5px);background:var(--ink);color:var(--bg)}
+.go span{line-height:1.3}
+.search{overflow:hidden;max-height:0;opacity:0;transition:max-height .45s var(--ease),opacity .3s,margin .45s var(--ease)}
+.search.on{max-height:70px;opacity:1;margin:20px 0 0}
+.search input{width:100%;background:transparent;border:none;border-bottom:1.4px solid var(--ink);padding:10px 0;outline:none;font-size:17px;font-weight:300}
+
+/* filtros */
+.tabs{display:flex;gap:8px;margin:44px -26px 4px;padding:0 26px;overflow-x:auto;scrollbar-width:none;animation:in .6s .35s var(--ease) both}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{padding:7px 14px;border:1.2px solid var(--line);color:var(--muted);font-size:13px;flex:0 0 auto;text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.tabs sup{font-size:9.5px;margin-left:3px}
+
+/* lista */
+.row{display:flex;align-items:center;gap:14px;padding:18px 0;border-bottom:1px solid var(--line);cursor:pointer;opacity:0;animation:in .5s var(--ease) forwards;animation-delay:calc(var(--i,0) * 45ms + .4s)}
+.row .tt{flex:1;min-width:0}
+.row b{display:block;font-weight:400;font-size:17.5px;letter-spacing:0;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .dot{width:8px;height:8px;border-radius:50%;background:var(--c,#9a9a95);flex:0 0 auto}
+.row .dot.off{opacity:.4}
+.row .cap{color:var(--muted)}
+.row:active .cap{transform:translateX(5px);color:var(--ink)}
+.row .th{width:40px;height:40px;border-radius:8px;overflow:hidden;flex:0 0 auto}
+.row .th img{width:100%;height:100%;object-fit:cover;filter:grayscale(.2)}
+.hoy{display:inline-block;background:var(--or);border-radius:99px;padding:0 7px;color:#fff;font-weight:500}
+.empty{color:var(--muted);padding:28px 0;font-size:14px}
+.fab{position:fixed;right:max(22px,calc(50% - 228px));bottom:calc(22px + env(safe-area-inset-bottom));z-index:7;width:60px;height:60px;border-radius:50%;background:var(--or);color:#fff;padding:0;display:grid;place-items:center;box-shadow:0 12px 24px -12px rgba(225,80,47,.7);animation:pop .6s .5s var(--spring) both}
+.fab svg{width:24px;height:24px}
+@keyframes pop{from{transform:scale(0)}}
+
+/* crear (pantalla negra) */
+.crear .h1{margin-top:110px}
+.etitle{min-height:1.2em}
+.oval{position:relative;display:inline-block}
+.oval svg{position:absolute;left:-10%;top:-18%;width:120%;height:140%;overflow:visible;pointer-events:none}
+.oval path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-dasharray:420;stroke-dashoffset:420;animation:draw 1s .6s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.opts{margin-top:30px;display:grid;gap:4px}
+.opts .go{animation-delay:calc(var(--i) * 80ms + .3s);padding:14px 0;border-bottom:1px solid var(--line);gap:18px}
+.opts .go b{display:block;font-size:22px;font-weight:300;letter-spacing:0;line-height:1.3}
+.opts .go small{color:var(--muted);font-size:13px}
+.opts .go .cap{color:var(--acc)}
+.foot{display:flex;align-items:center;gap:10px;margin-top:44px;color:var(--muted);font-size:13px;animation:in .6s .8s var(--ease) both}
+
+/* editor */
+.top{display:flex;justify-content:space-between;align-items:center;padding:calc(18px + env(safe-area-inset-top)) 0 0}
+.circ{width:42px;height:42px;padding:0;display:grid;place-items:center;color:var(--ink)}
+.top h1,.top .sub{display:none}
+.etitle{width:100%;border:none;background:transparent;outline:none;resize:none;font-size:40px;line-height:1.2;font-weight:300;letter-spacing:-.01em;margin:56px 0 20px;padding:0;overflow:hidden;color:var(--ink)}
+.ebody{width:100%;border:none;background:transparent;outline:none;resize:none;font-size:16.5px;line-height:1.65;padding:0;min-height:80px;overflow:hidden;color:var(--ink);opacity:.85}
+.etitle::placeholder,.ebody::placeholder{color:var(--muted);opacity:.7}
+.esec{margin-top:26px;animation:in .5s var(--ease) both}
+.esec h4{margin:0 0 4px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;color:var(--muted)}
+.esec h4::before{content:"[ "}.esec h4::after{content:" ]"}
+.eitem{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);animation:in .35s var(--ease) both}
+.eitem .cb{width:22px;height:22px;border-radius:50%;border:1.3px solid var(--muted);flex:0 0 auto;padding:0;display:grid;place-items:center;transition:background .3s,border-color .3s,transform .4s var(--spring)}
+.eitem .cb svg{width:12px;height:12px;stroke:#fff;stroke-width:2.4;fill:none;stroke-dasharray:20;stroke-dashoffset:20}
+.eitem.ok .cb{background:var(--acc);border-color:var(--acc)}
+.eitem.ok .cb svg{animation:check .35s .05s var(--ease) forwards}
+.eitem.ok .cb.just{animation:boing .45s var(--spring)}
+@keyframes check{to{stroke-dashoffset:0}}
+@keyframes boing{40%{transform:scale(1.25)}}
+.eitem input{flex:1;border:none;background:transparent;outline:none;font-size:16px;padding:14px 0;min-width:0;background-image:linear-gradient(var(--muted),var(--muted));background-size:0 1px;background-repeat:no-repeat;background-position:0 54%;transition:background-size .4s var(--ease),color .3s}
+.eitem.ok input{background-size:100% 1px;color:var(--muted)}
+.eitem .x{padding:6px;color:var(--muted)}
+.addline{color:var(--muted);padding:14px 0 0;font-size:14px;border-radius:0}
+.photos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+.photos .p{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:1;animation:in .45s var(--ease) both}
+.photos img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.photos .x{position:absolute;right:6px;top:6px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);color:#141414;padding:0;display:grid;place-items:center}
+.rem{background:var(--soft);border-radius:18px;padding:16px 18px;margin-left:-4px;margin-right:-4px}
+.rem .big2{font-size:28px;font-weight:300;letter-spacing:0;line-height:1.25;margin:6px 0 10px}
+.lr{display:flex;align-items:baseline;gap:10px;padding:8px 0}
+.lr .ic{align-self:center;display:grid;color:var(--muted)}
+.lr .ic svg{width:17px;height:17px}
+.lr .nm{white-space:nowrap}
+.lr .dots{flex:1;min-width:16px;border-bottom:1px dotted var(--line);transform:translateY(-4px)}
+.lr .vl{font-weight:500;white-space:nowrap}
+.rem input{border:none;background:transparent;outline:none;font-weight:500;text-align:right;padding:0;font-size:15px;min-width:0;color-scheme:light}
+html[data-th="negro"] .rem input,html[data-th="naranja"] .rem input{color-scheme:dark}
+.rsel{border:none;background:transparent;outline:none;font-weight:500;text-align:right;padding:0;appearance:none;-webkit-appearance:none;cursor:pointer}
+.rsel option{color:#141414}
+.rem .cal{width:100%;margin-top:12px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:99px}
+.rem .alt{display:flex;justify-content:space-between;gap:8px;margin-top:4px}
+.rem .alt button{padding:6px 0;font-size:12.5px;color:var(--muted)}
+.rem p{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.small{font-size:13px}.muted{color:var(--muted)}
+.tones{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.tones button{width:26px;height:26px;border-radius:50%;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.tones button.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--ink)}
+.del{color:var(--muted);margin-top:30px;padding:8px 0;font-size:13.5px;border-radius:0;text-decoration:underline;text-underline-offset:3px}
+.edbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:7;width:min(100%,500px);display:flex;align-items:center;justify-content:space-between;padding:12px 20px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%)}
+.edbar .l{display:flex;gap:2px}
+.edbar .l button{width:44px;height:44px;padding:0;display:grid;place-items:center;color:var(--ink);opacity:.8}
+.edbar .done{display:flex;align-items:center;gap:12px;font-size:15px;padding:10px 0 10px 12px}
+.edbar .done:active .cap{transform:translateX(5px);background:var(--ink);color:var(--bg)}
+.hbtn.on svg{fill:var(--acc);stroke:var(--acc)}
+.hbtn.pop svg{animation:hp .5s var(--spring)}
+@keyframes hp{30%{transform:scale(1.4)}}
+.spark{position:fixed;width:5px;height:5px;border-radius:50%;background:var(--or);pointer-events:none;z-index:30;animation:spark .6s var(--ease) forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+
+/* ajustes */
+.card{padding:20px 0;border-bottom:1px solid var(--line);animation:in .5s var(--ease) both}
+.card h2{margin:0 0 10px;font-weight:300;font-size:24px;letter-spacing:0;line-height:1.25}
+.btns{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}
+.pri,.btnlike{display:inline-flex;align-items:center;gap:10px;font-weight:500;padding:8px 0;cursor:pointer;position:relative}
+.pri::after,.btnlike::after{content:"→"}
+
+.viewer{position:fixed;inset:0;background:rgba(20,20,20,.96);z-index:20;display:grid;place-items:center;padding:20px;animation:fd .25s}
+@keyframes fd{from{opacity:0}}
+.viewer img{max-width:100%;max-height:100%;border-radius:12px;animation:zoom .4s var(--spring)}
+@keyframes zoom{from{transform:scale(.9);opacity:0}}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));z-index:21;background:var(--ink);color:var(--bg);font-size:13.5px;padding:10px 16px;border-radius:99px;
+  transform:translate(-50%,20px) scale(.94);opacity:0;pointer-events:none;transition:transform .45s var(--spring),opacity .25s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+#view{animation:page .45s var(--ease)}
+@keyframes page{from{opacity:0}}
+.leaving{animation:out .28s var(--ease) forwards!important}
+@keyframes out{to{opacity:0;height:0;padding:0;margin:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}.row{opacity:1}}
+
+/* crear: tarjetas de color */
+.crear .h1{margin-top:64px}
+.crear .oval svg path{stroke:var(--or);stroke-width:2}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:30px}
+.tc{border-radius:28px;padding:16px 16px 18px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;position:relative;overflow:hidden;
+  opacity:0;transform:translateY(18px);animation:tin .55s var(--ease) forwards;animation-delay:calc(var(--i) * 70ms + .15s);transition:transform .2s var(--ease),filter .2s}
+@keyframes tin{to{opacity:1;transform:none}}
+.tc:active{transform:scale(.98)!important;filter:brightness(.96)}
+.tc .hd{display:flex;justify-content:space-between;align-items:flex-start}
+.tc .num{font-size:12px;letter-spacing:.08em;font-weight:500;opacity:.7}
+.tc .ico svg{width:30px;height:30px;stroke-width:1.3;margin-top:22px}
+.tc b{display:block;font-size:27px;font-weight:300;line-height:1.15;letter-spacing:-.01em;margin-top:auto}
+.tc small{display:block;font-size:12.5px;opacity:.72;margin-top:4px;line-height:1.35}
+.tc .cap{transition:transform .45s var(--spring)}
+.tc:active .cap{transform:translateX(3px)}
+.tc.salvia{background:#cfd8d3;color:#141414}
+.tc.blanco{background:#f7f7f4;color:#141414}
+.tc.naranja{background:var(--or);color:#fff}
+.tc.negro{background:#262626;color:#f2f2ef;box-shadow:inset 0 0 0 1px #333}
+.tc.negro .cap,.tc.naranja .cap{color:inherit}
+.tc .deco{position:absolute;right:-24px;top:-24px;width:78px;height:78px;opacity:.55;animation:spin 18s linear infinite;z-index:0}
+.tc>*:not(.deco){position:relative;z-index:1}
+.tc.naranja .deco{color:#ffb39e}.tc.negro .deco{color:var(--or)}
+
+/* cajas de distintos tamaños con formas que giran */
+.grid4{grid-template-columns:1fr 1fr;grid-template-rows:152px 152px 150px;grid-template-areas:"nota lista" "nota aviso" "foto foto"}
+.tc{min-height:0;padding:16px}
+.tc.a-nota{grid-area:nota}.tc.a-lista{grid-area:lista}.tc.a-aviso{grid-area:aviso}.tc.a-foto{grid-area:foto;flex-direction:row;align-items:flex-end}
+.tc b{font-size:25px}
+.tc .hd{align-items:flex-start}
+.shape{position:relative;width:var(--s,62px);height:var(--s,62px);display:grid;place-items:center;flex:0 0 auto}
+.shape svg.sh{position:absolute;inset:0;width:100%;height:100%;animation:spin var(--t,22s) linear infinite;animation-direction:var(--dir,normal)}
+.shape .i{position:relative;width:calc(var(--s,62px) * .36);height:calc(var(--s,62px) * .36);stroke-width:1.6}
+.tc.a-nota .shape{--s:clamp(70px,22vw,96px)}
+.tc .hd .cap{flex:0 0 auto}
+.tc .hd{gap:6px}
+.tc.a-foto .shape{--s:92px;margin-left:auto;align-self:center}
+.tc.a-foto .txt{display:flex;flex-direction:column;justify-content:space-between;height:100%}
+.tc.a-foto .txt .cap{margin-bottom:auto}
+.tc small{max-width:170px}
+.tc.a-lista small,.tc.a-aviso small{display:none}
+</style>
+</head>
+<body>
+<div class="wrap"><main id="view"></main></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="camIn" accept="image/*" capture="environment" class="vh" aria-hidden="true">
+<input type="file" id="galIn" accept="image/*" multiple class="vh" aria-hidden="true">
+<script>
+(function(){
+"use strict";
+// ---------- utilidades ----------
+const $ = s => document.querySelector(s);
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, ...kids){
+  const e = document.createElement(tag);
+  if (attrs) for (const k in attrs){
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "text") e.textContent = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "style") e.setAttribute("style", v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()){ if (c == null || c === false) continue; e.append(c instanceof Node ? c : document.createTextNode(String(c))); }
+  return e;
+}
+function icon(parts, fill){
+  const s = document.createElementNS(SVGNS,"svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("class","i");
+  if (fill){ s.style.fill = "currentColor"; s.style.stroke = "none"; }
+  parts.forEach(([t,a]) => { const n = document.createElementNS(SVGNS,t); for (const k in a) n.setAttribute(k,a[k]); s.append(n); });
+  return s;
+}
+const IC = {
+  plus: () => icon([["path",{d:"M12 5v14M5 12h14"}]]),
+  cam: () => icon([["path",{d:"M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"}],["circle",{cx:12,cy:12.5,r:3.5}]]),
+  back: () => icon([["path",{d:"M15 5l-7 7 7 7"}]]),
+  heart: () => icon([["path",{d:"M12 20s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z"}]]),
+  bell: () => icon([["path",{d:"M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"}],["path",{d:"M10 20.5a2 2 0 0 0 4 0"}]]),
+  list: () => icon([["path",{d:"M9 6h11M9 12h11M9 18h11"}],["circle",{cx:4.5,cy:6,r:1.2}],["circle",{cx:4.5,cy:12,r:1.2}],["circle",{cx:4.5,cy:18,r:1.2}]]),
+  img: () => icon([["rect",{x:3.5,y:4.5,width:17,height:15,rx:3}],["circle",{cx:9,cy:10,r:1.6}],["path",{d:"M20.5 16l-5-5-8.5 8.5"}]]),
+  trash: () => icon([["path",{d:"M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"}]]),
+  search: () => icon([["circle",{cx:11,cy:11,r:6.5}],["path",{d:"M20 20l-4.2-4.2"}]]),
+  gear: () => icon([["circle",{cx:12,cy:12,r:3}],["path",{d:"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"}]]),
+  x: () => icon([["path",{d:"M6 6l12 12M18 6 6 18"}]]),
+  home: () => icon([["path",{d:"M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"}]]),
+  note: () => icon([["path",{d:"M6 3.5h9l3.5 3.5V20a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"}],["path",{d:"M9 11h6M9 15h4"}]]),
+  cal: () => icon([["rect",{x:4,y:5,width:16,height:15,rx:3}],["path",{d:"M4 10h16M9 3v4M15 3v4M12 13.5v4M10 15.5h4"}]])
+};
+const MESES_C = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DIAS_C = ["dom","lun","mar","mié","jue","vie","sáb"];
+const COLORES = ["blanco","arena","salvia","cielo","naranja","negro"];
+const MUESTRA = {blanco:"#fbf9f0",arena:"#f3ead2",salvia:"#e3ecd9",cielo:"#eaf5ad",naranja:"#f6dccb",negro:"#dfe6ee"};
+const VIEJOS = {cream:"arena", terra:"naranja", yellow:"arena", lime:"salvia", blue:"cielo", pink:"arena", sol:"arena", coral:"naranja", lila:"cielo", menta:"salvia", durazno:"arena"};
+const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch(e){} };
+// onda al tocar cualquier botón o tarjeta
+document.addEventListener("pointerdown", e => {
+  const t = e.target.closest("button,.tile,.btnlike"); if (!t || t.classList.contains("tc")) return;
+  const r = t.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
+  const sp = document.createElement("span"); sp.className = "rip";
+  sp.style.cssText = "width:"+d+"px;height:"+d+"px;left:"+(e.clientX - r.left - d/2)+"px;top:"+(e.clientY - r.top - d/2)+"px";
+  if (getComputedStyle(t).position === "static") t.style.position = "relative";
+  t.append(sp); setTimeout(() => sp.remove(), 600);
+}, {passive:true});
+function chispas(elm){
+  const r = elm.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+  for (let i = 0; i < 8; i++){ const a = i/8 * Math.PI*2, s = document.createElement("span"); s.className = "spark";
+    s.style.cssText = "left:"+(cx-3)+"px;top:"+(cy-3)+"px;--dx:"+(Math.cos(a)*28)+"px;--dy:"+(Math.sin(a)*28)+"px";
+    document.body.append(s); setTimeout(() => s.remove(), 650); }
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const pad = n => String(n).padStart(2,"0");
+let toastT;
+function toast(t){ const s = $("#toast"); s.textContent = t; s.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => s.classList.remove("show"), 2400); }
+function setBarras(color){ let m = document.querySelector('meta[name="theme-color"]'); m.setAttribute("content", color); }
+
+// ---------- almacenamiento (IndexedDB: notas y fotos viven solo en este celular) ----------
+let dbp = null;
+function db(){
+  if (!dbp) dbp = new Promise((res, rej) => {
+    const r = indexedDB.open("misnotas", 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore("notas", {keyPath:"id"}); r.result.createObjectStore("fotos"); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  return dbp;
+}
+async function tx(store, mode, fn){
+  const d = await db();
+  return new Promise((res, rej) => { const t = d.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); });
+}
+const dbAll = () => tx("notas","readonly", s => s.getAll());
+const dbPut = n => tx("notas","readwrite", s => s.put(n));
+const dbDel = id => tx("notas","readwrite", s => s.delete(id));
+const fotoPut = (id, blob) => tx("fotos","readwrite", s => s.put(blob, id));
+const fotoGet = id => tx("fotos","readonly", s => s.get(id));
+const fotoDel = id => tx("fotos","readwrite", s => s.delete(id));
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+let notas = [];
+const urlCache = new Map();
+async function fotoURL(id){
+  if (urlCache.has(id)) return urlCache.get(id);
+  const b = await fotoGet(id).catch(() => null); if (!b) return null;
+  const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
+}
+function imgEl(id, cls){
+  const im = el("img",{alt:"Foto", loading:"lazy", class:cls||null});
+  fotoURL(id).then(u => { if (u) im.src = u; });
+  return im;
+}
+// reduce la foto (máx. 1600 px, JPEG) para que no ocupe tanto espacio
+async function comprimir(file){
+  const bmp = await createImageBitmap(file).catch(() => null);
+  if (!bmp) return file;
+  const max = 1600, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(res => c.toBlob(b => res(b || file), "image/jpeg", 0.82));
+}
+
+// ---------- estado y navegación ----------
+let filtro = "todas", busca = "", mostrarBusca = false;
+const saveTimers = {};
+function guardar(n){ n.editada = Date.now(); clearTimeout(saveTimers[n.id]); saveTimers[n.id] = setTimeout(() => dbPut(n).catch(() => toast("No se pudo guardar")), 250); }
+function guardarYa(n){ clearTimeout(saveTimers[n.id]); n.editada = Date.now(); return dbPut(n); }
+document.addEventListener("visibilitychange", () => { if (document.hidden) notas.forEach(n => { if (saveTimers[n.id]){ clearTimeout(saveTimers[n.id]); dbPut(n); } }); });
+const vacia = n => !n.titulo.trim() && !n.texto.trim() && !n.items.some(i => i.t.trim()) && !n.fotos.length;
+function nueva(extra){
+  const n = Object.assign({id:uid(), titulo:"", texto:"", items:[], fotos:[], color:"blanco", importante:false, fecha:"", hora:"09:00", creada:Date.now(), editada:Date.now()}, extra||{});
+  notas.unshift(n); return n;
+}
+function ruta(){ const h = location.hash.slice(1); return h.startsWith("n-") ? {nota:h.slice(2)} : h === "ajustes" ? {ajustes:true} : h === "crear" ? {crear:true} : h === "buscar" ? {buscar:true} : h === "avisos" ? {avisos:true} : {}; }
+function ir(h){ if (location.hash.slice(1) !== h) location.hash = h; else render(); }
+function volver(){ if (history.length > 1 && location.hash) history.back(); else { location.hash = ""; } }
+window.addEventListener("hashchange", () => { limpiarVacias(); render(); });
+function limpiarVacias(){
+  const r = ruta();
+  notas.filter(n => vacia(n) && n.id !== r.nota).forEach(n => { dbDel(n.id); notas = notas.filter(x => x !== n); });
+}
+
+// ---------- fechas ----------
+// ---------- repetir ----------
+const REPITE = {"":"No se repite", diario:"Todos los días", semanal:"Cada semana", mensual:"Cada mes", anual:"Cada año"};
+const RRULE = {diario:"FREQ=DAILY", semanal:"FREQ=WEEKLY", mensual:"FREQ=MONTHLY", anual:"FREQ=YEARLY"};
+function ocurrencia(n, k){ // k-ésima repetición desde la fecha inicial
+  const [y,m,d] = n.fecha.split("-").map(Number), [hh,mm] = (n.hora || "09:00").split(":").map(Number);
+  if (n.repite === "diario") return new Date(y, m-1, d + k, hh, mm);
+  if (n.repite === "semanal") return new Date(y, m-1, d + 7*k, hh, mm);
+  if (n.repite === "mensual"){ const ult = new Date(y, m-1+k+1, 0).getDate(); return new Date(y, m-1+k, Math.min(d, ult), hh, mm); }
+  if (n.repite === "anual"){ const ult = new Date(y+k, m, 0).getDate(); return new Date(y+k, m-1, Math.min(d, ult), hh, mm); }
+  return new Date(y, m-1, d, hh, mm);
+}
+function proxima(n){
+  const base = ocurrencia(n, 0);
+  if (!n.repite || !RRULE[n.repite]) return base;
+  const limite = Date.now() - 36e5;           // muestra la de hoy hasta 1 hora después
+  for (let k = 0; k < 5000; k++){ const o = ocurrencia(n, k); if (o.getTime() >= limite) return o; }
+  return base;
+}
+function cuando(n){
+  if (!n.fecha) return null;
+  const d = proxima(n);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const dia = new Date(d); dia.setHours(0,0,0,0);
+  const dif = Math.round((dia - hoy)/864e5);
+  const hora = d.toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"});
+  const txt = dif === 0 ? "Hoy, " + hora : dif === 1 ? "Mañana, " + hora : dif === -1 ? "Ayer, " + hora : DIAS_C[d.getDay()] + " " + d.getDate() + " " + MESES_C[d.getMonth()] + ", " + hora;
+  return {d, txt, hoy: dif === 0, paso: d < new Date(), rep: REPITE[n.repite] && n.repite ? REPITE[n.repite] : ""};
+}
+
+// ---------- calendario ----------
+const fmtG = d => d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + "T" + pad(d.getHours()) + pad(d.getMinutes()) + "00";
+function detalles(n){
+  const partes = [];
+  if (n.texto.trim()) partes.push(n.texto.trim());
+  if (n.items.length) partes.push(n.items.map(i => (i.ok ? "☑ " : "☐ ") + i.t).join("\n"));
+  partes.push("— Mis notas");
+  return partes.join("\n\n");
+}
+function linkGoogle(n){
+  const ini = new Date(n.fecha + "T" + (n.hora || "09:00")), fin = new Date(ini.getTime() + 30*60000);
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Bogota";
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(n.titulo || "Recordatorio") +
+    "&dates=" + fmtG(ini) + "/" + fmtG(fin) + "&details=" + encodeURIComponent(detalles(n)) + "&ctz=" + encodeURIComponent(tz) +
+    (RRULE[n.repite] ? "&recur=" + encodeURIComponent("RRULE:" + RRULE[n.repite]) : "");
+}
+function linkAndroid(n){
+  // abre la pantalla de "nuevo evento" del calendario del celular con todo lleno
+  const ini = new Date(n.fecha + "T" + (n.hora || "09:00")).getTime();
+  const enc = s => encodeURIComponent(s).replace(/;/g,"%3B");
+  return "intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;" +
+    "S.title=" + enc(n.titulo || "Recordatorio") + ";S.description=" + enc(detalles(n)) + ";l.beginTime=" + ini + ";l.endTime=" + (ini + 30*60000) + (RRULE[n.repite] ? ";S.rrule=" + enc(RRULE[n.repite]) : "") +
+    ";S.browser_fallback_url=" + enc(linkGoogle(n)) + ";end";
+}
+function abrir(url){ const a = el("a",{href:url,target:"_blank",rel:"noopener"}); document.body.append(a); a.click(); a.remove(); }
+function alCalendario(n){
+  if (!n.fecha){ toast("Primero elige la fecha"); return; }
+  n.enCalendario = true; guardar(n);
+  if (/Android/i.test(navigator.userAgent)) location.href = linkAndroid(n); else abrir(linkGoogle(n));
+}
+function descargarICS(n){
+  const ini = new Date(n.fecha + "T" + (n.hora || "09:00")), fin = new Date(ini.getTime() + 30*60000);
+  const z = d => d.toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"");
+  const esc = s => s.replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/,/g,"\\,").replace(/;/g,"\\;");
+  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Mis notas//ES","BEGIN:VEVENT","UID:" + n.id + "@misnotas","DTSTAMP:" + z(new Date()),
+    "DTSTART:" + z(ini),"DTEND:" + z(fin)].concat(RRULE[n.repite] ? ["RRULE:" + RRULE[n.repite]] : []).concat(["SUMMARY:" + esc(n.titulo || "Recordatorio"),"DESCRIPTION:" + esc(detalles(n)),
+    "BEGIN:VALARM","TRIGGER:PT0M","ACTION:DISPLAY","DESCRIPTION:" + esc(n.titulo || "Recordatorio"),"END:VALARM","END:VEVENT","END:VCALENDAR"]).join("\r\n");
+  const a = el("a",{href:URL.createObjectURL(new Blob([ics],{type:"text/calendar"})), download:(n.titulo || "recordatorio").replace(/[^\w\- ]+/g,"").slice(0,40) + ".ics"});
+  document.body.append(a); a.click(); a.remove();
+}
+
+// ---------- pantallas ----------
+const DIAS_L = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const MESES_L = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const visibles = () => notas.filter(n => !vacia(n));
+const tsN = n => n.fecha ? proxima(n).getTime() : 0;
+function porFecha(arr){ const ahora = Date.now(); return arr.sort((a,b) => { const pa = tsN(a) < ahora, pb = tsN(b) < ahora; return pa !== pb ? (pa ? 1 : -1) : (pa ? tsN(b) - tsN(a) : tsN(a) - tsN(b)); }); }
+const tono = n => COLORES.includes(n.color) ? n.color : "blanco";
+let indPrev = null;
+function render(){
+  const r = ruta(), v = $("#view");
+  document.querySelectorAll(".dockb,.dock,.navw,.tools,.viewer,.sheet,.fab,.edbar,.swirl").forEach(x => x.remove());
+  v.replaceChildren(); v.className = ""; v.style.animation = "none"; void v.offsetWidth; v.style.animation = "";
+
+  if (r.nota){
+    const n = notas.find(x => x.id === r.nota);
+    if (!n){ location.hash = ""; return; }
+    return vEditor(v, n);
+  }
+  if (r.ajustes) return vAjustes(v);
+  if (r.crear) return vCrear(v);
+  if (r.avisos) filtro = "avisos";
+  if (r.buscar) mostrarBusca = true;
+  vInicio(v);
+}
+function tituloDe(n){ return n.titulo || (n.texto.split("\n")[0] || (n.fotos.length ? "Foto" : "Sin título")).slice(0,60); }
+function corazon(n, cls){
+  const b = el("button",{class:(cls||"circ") + " hbtn" + (n.importante ? " on" : ""),"aria-label": n.importante ? "Quitar de importantes" : "Marcar como importante",
+    onclick:e => { e.stopPropagation(); n.importante = !n.importante; guardar(n); b.classList.toggle("on", n.importante);
+      b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); if (n.importante){ chispas(b); vib(15); } }}, IC.heart());
+  return b;
+}
+
+// colores claros por tipo
+// colores por tipo (puntos de la lista) y tema de fondo de cada pantalla
+const COL = {nota:"#9a9a95", lista:"#7f968a", aviso:"#e1502f", foto:"#141414", fav:"#e1502f"};
+const tipoDe = n => n.fecha ? "aviso" : n.items.length ? "lista" : n.fotos.length ? "foto" : "nota";
+const TEMA = {inicio:"gris", crear:"negro", ajustes:"salvia", nota:"gris", lista:"blanco", aviso:"naranja", foto:"negro"};
+const FONDO = {gris:"#e9e9e6", blanco:"#f7f7f4", salvia:"#cfd8d3", naranja:"#e1502f", negro:"#141414"};
+function espiral(pantalla){ const t = TEMA[pantalla] || "gris"; document.documentElement.dataset.th = t; setBarras(FONDO[t]); }
+const star = () => { const s = document.createElementNS(SVGNS,"svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("class","star"); s.setAttribute("aria-hidden","true");
+  let p = ""; for (let i = 0; i < 24; i++){ const r = i % 2 ? 4.2 : 11.5, a = i * Math.PI/12; p += (i ? "L" : "M") + (12 + r*Math.cos(a)).toFixed(2) + " " + (12 + r*Math.sin(a)).toFixed(2); }
+  s.innerHTML = '<path d="' + p + 'Z" fill="currentColor"/>'; return s; };
+const cap = () => { const c = el("span",{class:"cap"}); const s = icon([["path",{d:"M3 6h14M12 1.5 17 6l-5 4.5"}]]); s.setAttribute("viewBox","0 0 20 12"); c.append(s); return c; };
+const IC_AR = () => { const s = icon([["path",{d:"M2 12h28M24 6l6 6-6 6"}]]); s.setAttribute("viewBox","0 0 32 24"); return s; };
+function vInicio(v){
+  espiral("inicio");
+  v.append(el("div",{class:"bar"}, el("span",{class:"word"}, star(), el("span",{class:"brk"}, "[ Mis", el("br"), "notas ]")),
+    el("div",{class:"r"},
+      el("button",{class:"ib","aria-label":"Buscar",onclick:() => { mostrarBusca = !mostrarBusca; if (!mostrarBusca) busca = ""; render(); }}, mostrarBusca ? IC.x() : IC.search()),
+      el("button",{class:"ib","aria-label":"Ajustes",onclick:() => ir("ajustes")}, IC.gear()))));
+  const vis = visibles(), hoyN = vis.filter(n => n.fecha && cuando(n).hoy && !cuando(n).paso).length;
+  const numEl = el("span",{class:"n",text:"0"});
+  v.append(el("div",{class:"big"}, numEl, el("span",{class:"u",text: vis.length === 1 ? "nota" : "notas"})));
+  const t0 = performance.now(), tot = vis.length;
+  (function paso(t){ const k = Math.min(1,(t - t0)/700), e = 1 - Math.pow(1-k,3); numEl.textContent = String(Math.round(tot*e)); if (k < 1) requestAnimationFrame(paso); })(t0);
+  v.append(el("p",{class:"lead it",text: hoyN ? "Hoy tienes " + hoyN + (hoyN === 1 ? " aviso." : " avisos.") : vis.length ? "Todo en orden por hoy." : "Empecemos por la primera."}));
+  v.append(el("button",{class:"go",onclick:() => ir("crear")}, cap(), el("span",{text:"Nueva nota, lista, aviso o foto"})));
+  const sb = el("div",{class:"search" + (mostrarBusca ? " on" : "")});
+  const inp = el("input",{type:"search",placeholder:"Buscar…",value:busca});
+  inp.addEventListener("input", () => { busca = inp.value; pintar(); });
+  sb.append(inp); v.append(sb);
+  if (mostrarBusca) setTimeout(() => inp.focus(), 250);
+  const F = [["todas","Todas",() => true],["avisos","Avisos",n => !!n.fecha],["listas","Listas",n => n.items.length > 0],["fotos","Fotos",n => n.fotos.length > 0],["importantes","Favoritas",n => n.importante]];
+  if (!F.some(f => f[0] === filtro)) filtro = "todas";
+  const tabs = el("div",{class:"tabs",role:"tablist"});
+  F.forEach(([k,lab,fn]) => tabs.append(el("button",{role:"tab","aria-selected":String(filtro===k),class:filtro===k?"on":"",onclick:() => { if (filtro === k) return; filtro = k; vib(8); render(); }}, lab, el("sup",{text:String(vis.filter(fn).length)}))));
+  v.append(tabs);
+  const lista = el("div"); v.append(lista);
+  function pintar(){
+    lista.replaceChildren();
+    const q = busca.trim().toLowerCase(), fn = q ? (() => true) : F.find(f => f[0] === filtro)[2];
+    let arr = visibles().filter(n => fn(n) && (!q || (n.titulo + " " + n.texto + " " + n.items.map(i => i.t).join(" ")).toLowerCase().includes(q)));
+    if (filtro === "avisos") porFecha(arr); else arr.sort((a,b) => (b.importante - a.importante) || (b.editada - a.editada));
+    if (!arr.length){ lista.append(el("div",{class:"empty",text: q ? "Sin resultados." : vis.length ? "Nada por aquí." : "Aún no tienes notas."})); return; }
+    arr.forEach((n, i) => lista.append(fila(n, i)));
+  }
+  pintar();
+  document.body.append(el("button",{class:"fab","aria-label":"Nueva nota",onclick:() => ir("crear")}, IC.plus()));
+}
+function fila(n, i){
+  const c = cuando(n);
+  let meta;
+  if (c) meta = el("small",{}, c.hoy && !c.paso ? el("span",{class:"hoy",text:c.txt}) : c.txt, c.rep ? " · ↻ " + c.rep.toLowerCase() : "");
+  else if (n.items.length) meta = el("small",{text:n.items.filter(x => x.ok).length + " de " + n.items.length + " listos"});
+  else meta = el("small",{text:(n.titulo ? n.texto : n.texto.split("\n").slice(1).join(" ")).replace(/\n/g," ").trim() || (n.fotos.length ? n.fotos.length + (n.fotos.length === 1 ? " foto" : " fotos") : "Nota")});
+  const ar = cap();
+  return el("div",{class:"row",style:"--i:"+i,role:"button",tabindex:"0",onclick:() => ir("n-" + n.id),onkeydown:e => { if (e.key === "Enter") ir("n-" + n.id); }},
+    n.fotos.length ? el("span",{class:"th"}, imgEl(n.fotos[0])) : el("span",{class:"dot" + (c && c.paso && !c.rep ? " off" : ""),style:"--c:" + COL[tipoDe(n)]}),
+    el("div",{class:"tt"}, el("b",{text:(n.importante ? "♥ " : "") + tituloDe(n)}), meta), ar);
+}
+// formas tipo "galleta": r(θ) = R·(1 + a·cos(kθ)); o estrella de puntas
+function forma(k, a, estrella){
+  const sv = document.createElementNS(SVGNS,"svg"); sv.setAttribute("viewBox","-50 -50 100 100"); sv.setAttribute("class","sh"); sv.setAttribute("aria-hidden","true");
+  let d = "";
+  if (estrella){ for (let i = 0; i < k*2; i++){ const r = i % 2 ? 30 : 48, t = i * Math.PI / k; d += (i ? "L" : "M") + (r*Math.cos(t)).toFixed(2) + " " + (r*Math.sin(t)).toFixed(2); } d += "Z"; }
+  else { for (let i = 0; i <= 180; i++){ const t = i/180 * Math.PI*2, r = 44 * (1 + a*Math.cos(k*t)); d += (i ? "L" : "M") + (r*Math.cos(t)).toFixed(2) + " " + (r*Math.sin(t)).toFixed(2); } d += "Z"; }
+  sv.innerHTML = '<path d="' + d + '" fill="currentColor"/>';
+  return sv;
+}
+function vCrear(v){
+  espiral("crear");
+  v.classList.add("crear");
+  v.append(el("div",{class:"bar"}, el("button",{class:"ib","aria-label":"Volver",onclick:volver}, IC.back()), el("span",{class:"brk",style:"text-align:right"}, "[ Nueva", el("br"), "entrada ]")));
+  const ov = el("span",{class:"oval it"}, "guardar");
+  const svg = document.createElementNS(SVGNS,"svg"); svg.setAttribute("viewBox","0 0 120 50"); svg.setAttribute("preserveAspectRatio","none");
+  svg.innerHTML = '<path d="M96 8 C 70 0, 18 2, 6 18 C -4 34, 30 48, 70 46 C 104 44, 120 32, 112 18 C 106 8, 86 4, 70 6"/>';
+  ov.append(svg);
+  v.append(el("h1",{class:"h1"}, "¿Qué quieres", el("br"), ov, "?"));
+  // forma + ícono: [k, a, estrella, color forma, color ícono, duración, dirección]
+  const caja = (i, area, cls, rot, ic, fm, titulo, sub, fn) => {
+    const sh = el("span",{class:"shape",style:"color:" + fm[3] + ";--t:" + fm[5] + ";--dir:" + fm[6]}, forma(fm[0], fm[1], fm[2]));
+    // solo la forma, sin ícono
+    const txt = el("div",{class:"txt"}, el("b",{text:titulo}), el("small",{text:sub}));
+    const btn = el("button",{class:"tc " + cls + " a-" + area,style:"--i:"+i+";--r:"+rot,onclick:() => { vib(12); fn(); }});
+    if (area === "foto"){ btn.append(el("div",{class:"txt"}, cap(), el("div",{}, el("b",{text:titulo}), el("small",{text:sub}))), sh); }
+    else btn.append(el("div",{class:"hd"}, sh, cap()), txt);
+    return btn;
+  };
+  v.append(el("div",{class:"grid4"},
+    caja(0, "nota", "salvia", "-1.5deg", IC.note(), [4, .14, false, "#141414", "#cfd8d3", "26s", "normal"], "Nota", "Lo que quieras recordar.", () => { const n = nueva({color:"blanco"}); ir("n-" + n.id); }),
+    caja(1, "lista", "blanco", "2deg", IC.list(), [9, .06, false, "#e1502f", "#fff", "30s", "reverse"], "Lista", "", () => { const n = nueva({color:"blanco", items:[{t:"",ok:false}]}); ir("n-" + n.id); }),
+    caja(2, "aviso", "naranja", "-2deg", IC.bell(), [8, 0, true, "#141414", "#e1502f", "18s", "normal"], "Aviso", "", () => { const n = nueva({color:"blanco", fecha:hoyISO(), hora:"09:00"}); ir("n-" + n.id); }),
+    caja(3, "foto", "negro", "1deg", IC.cam(), [6, .1, false, "#e1502f", "#141414", "24s", "reverse"], "Foto", "Tómala ahora y agrégale texto.", () => { pendienteFoto = "nueva"; $("#camIn").click(); })));
+  v.append(el("div",{class:"foot"}, star(), el("span",{class:"it",style:"font-size:18px;color:var(--ink)",text:"Lo que no se anota, se olvida."})));
+}
+function barra(){}
+function hojaCrear(){ ir("crear"); }
+
+let pendienteFoto = null; // "nueva" o id de nota
+const hoyISO = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); };
+function vEditor(v, n){
+  const tipo = tipoDe(n);
+  espiral(tipo);
+  const fe0 = new Date(n.creada);
+  v.append(el("div",{class:"top"},
+    el("button",{class:"circ","aria-label":"Volver",onclick:volver}, IC.back()),
+    el("div",{}, el("h1",{text: n.items.length ? "Lista" : n.fotos.length ? "Foto" : "Nota"}), el("span",{class:"sub",text:fe0.getDate() + " " + MESES_C[fe0.getMonth()] + " " + fe0.getFullYear()})),
+    corazon(n)));
+  const t = el("textarea",{class:"etitle",rows:"1",placeholder:"Título",maxlength:"120"}); t.value = n.titulo;
+  const b = el("textarea",{class:"ebody",placeholder:"Escribe lo que quieras recordar…"}); b.value = n.texto;
+  const auto = x => { x.style.height = "auto"; x.style.height = x.scrollHeight + "px"; };
+  t.addEventListener("input", () => { n.titulo = t.value.replace(/\n/g," "); auto(t); guardar(n); });
+  t.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); const li = v.querySelector(".eitem input"); if (n.items.length && li && !n.texto) li.focus(); else b.focus(); } });
+  b.addEventListener("input", () => { n.texto = b.value; auto(b); guardar(n); });
+  v.append(t, b); requestAnimationFrame(() => { auto(t); auto(b); if (vacia(n) || (!n.titulo && Date.now() - n.creada < 15000)) t.focus(); });
+
+  // lista
+  const sl = el("div",{class:"esec" + (n.items.length ? "" : " hide")}, el("h4",{text:"Lista"}));
+  const chk = () => icon([["path",{d:"M5 12.5l4.5 4.5L19 7.5"}]]);
+  const pintarItems = (enfocar, recien) => {
+    let foco = null;
+    sl.querySelectorAll(".eitem,.addline").forEach(x => x.remove());
+    n.items.forEach((it, i) => {
+      const inp = el("input",{value:it.t,placeholder:"Escribe un elemento"});
+      inp.addEventListener("input", () => { it.t = inp.value; guardar(n); });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); n.items.splice(i+1, 0, {t:"", ok:false}); guardar(n); pintarItems(i+1); } else if (e.key === "Backspace" && !inp.value && n.items.length > 0){ e.preventDefault(); n.items.splice(i,1); guardar(n); pintarItems(Math.max(0,i-1)); } });
+      const row = el("div",{class:"eitem" + (it.ok ? " ok" : ""),style:"animation-delay:"+(i*30)+"ms"},
+        el("button",{class:"cb" + (recien === i ? " just" : ""),"aria-label": it.ok ? "Desmarcar" : "Marcar",onclick:() => { it.ok = !it.ok; guardar(n); if (it.ok) vib(12); pintarItems(null, it.ok ? i : null); }}, chk()),
+        inp, el("button",{class:"x","aria-label":"Quitar",text:"✕",onclick:() => { row.classList.add("leaving"); setTimeout(() => { n.items.splice(i,1); guardar(n); pintarItems(); if (!n.items.length) sl.classList.add("hide"); }, 260); }}));
+      if (recien != null || enfocar === null) row.style.animation = "none";
+      sl.append(row);
+      if (enfocar === i) foco = inp;
+    });
+    sl.append(el("button",{class:"addline",text:"+ Agregar elemento",onclick:() => { n.items.push({t:"", ok:false}); guardar(n); pintarItems(n.items.length-1); }}));
+    if (foco) foco.focus();
+  };
+  pintarItems(); v.append(sl);
+
+  // fotos
+  const sf = el("div",{class:"esec" + (n.fotos.length ? "" : " hide")}, el("h4",{text:"Fotos"}));
+  const grid = el("div",{class:"photos"});
+  n.fotos.forEach((id, i) => { const p = el("div",{class:"p",style:"animation-delay:"+(i*60)+"ms"},
+    (() => { const im = imgEl(id); im.addEventListener("click", () => verFoto(id)); return im; })(),
+    el("button",{class:"x","aria-label":"Quitar foto",onclick:async () => { p.classList.add("leaving"); n.fotos = n.fotos.filter(x => x !== id); await guardarYa(n); fotoDel(id); setTimeout(render, 280); }}, IC.x()));
+    grid.append(p); });
+  sf.append(grid); v.append(sf);
+
+  // aviso
+  const sr = el("div",{class:"esec rem" + (n.fecha ? "" : " hide")}, el("h4",{text:"Aviso"}));
+  const fIn = el("input",{type:"date",value:n.fecha,"aria-label":"Fecha"});
+  const hIn = el("input",{type:"time",value:n.hora || "09:00","aria-label":"Hora"});
+  fIn.addEventListener("change", () => { n.fecha = fIn.value; n.enCalendario = false; guardar(n); render(); });
+  hIn.addEventListener("change", () => { n.hora = hIn.value || "09:00"; n.enCalendario = false; guardar(n); render(); });
+  const c = cuando(n);
+  if (c){ sr.append(el("div",{class:"big2",text:c.txt})); if (c.rep) sr.append(el("div",{class:"small muted",style:"margin:-2px 0 6px",text:"↻ " + c.rep + (n.repite === "mensual" ? " (día " + (+n.fecha.slice(8)) + ")" : "")})); }
+  const lr = (ic, lab, ctl) => el("div",{class:"lr"}, el("span",{class:"ic"}, ic), el("span",{class:"nm",text:lab}), el("span",{class:"dots"}), ctl);
+  [lr(IC.cal(), "Fecha", fIn), lr(icon([["circle",{cx:12,cy:13,r:7}],["path",{d:"M12 9.5V13l2.5 1.5M9.5 3h5"}]]), "Hora", hIn),
+    lr(icon([["path",{d:"M4 9h13l-3-3M20 15H7l3 3"}]]), "Repetir", (() => { const sel = el("select",{"aria-label":"Repetir",class:"rsel"}, Object.entries(REPITE).map(([k,t]) => el("option",{value:k,text:t,selected:(n.repite||"")===k})));
+      sel.addEventListener("change", () => { n.repite = sel.value; n.enCalendario = false; guardar(n); vib(8); render(); toast(sel.value ? "Se repetirá: " + REPITE[sel.value].toLowerCase() : "Ya no se repite"); }); return sel; })()),
+    lr(icon([["path",{d:"M4 12a8 8 0 1 1 3 6.2M4 18v-4h4"}]]), "Calendario", el("span",{class:"vl",text: n.enCalendario ? "Enviado" : "Pendiente"})),
+    n.fecha ? el("button",{class:"cal",onclick:() => { vib(12); alCalendario(n); }}, IC.cal(), n.enCalendario ? "Agregar de nuevo al calendario" : "Agregar al calendario") : null,
+    el("p",{text: n.fecha ? (c && c.paso ? "Esta fecha ya pasó. " : "") + (n.enCalendario ? "Si cambias la fecha o la repetición, agrégalo otra vez." : n.repite ? "Al agregarlo, tu calendario te avisará " + REPITE[n.repite].toLowerCase() + "." : "Tu calendario te avisará ese día.") : "Elige el día y la hora del aviso."}),
+    el("div",{class:"alt"},
+      n.fecha ? el("button",{text:"Google Calendar (web)",onclick:() => { n.enCalendario = true; guardar(n); abrir(linkGoogle(n)); }}) : el("span"),
+      n.fecha ? el("button",{text:"Descargar .ics",onclick:() => descargarICS(n)}) : null,
+      el("button",{text:"Quitar",onclick:() => { n.fecha = ""; n.enCalendario = false; guardar(n); render(); }}))].filter(Boolean).forEach(x => sr.append(x));
+  v.append(sr);
+
+  const del = el("button",{class:"del",text:"Borrar nota",onclick:async () => { if (!del.dataset.ok){ del.dataset.ok = "1"; del.textContent = "Toca otra vez para borrar"; vib([10,40,10]); setTimeout(() => { delete del.dataset.ok; del.textContent = "Borrar nota"; }, 3000); return; }
+    n.fotos.forEach(id => fotoDel(id)); await dbDel(n.id); notas = notas.filter(x => x !== n); toast("Nota borrada"); location.hash = ""; }});
+  v.append(del);
+
+  const done = el("button",{class:"done",onclick:() => { vib(10); done.firstChild.textContent = "Guardado"; setTimeout(() => { location.hash = ""; }, 350); }}, el("span",{text:"Listo"}), cap());
+  document.body.append(el("div",{class:"edbar"},
+    el("div",{class:"l"},
+      el("button",{"aria-label":"Agregar lista",onclick:() => { sl.classList.remove("hide"); if (!n.items.length){ n.items.push({t:"", ok:false}); guardar(n); } pintarItems(n.items.length-1); sl.scrollIntoView({behavior:"smooth",block:"center"}); }}, IC.list()),
+      el("button",{"aria-label":"Tomar foto",onclick:() => { pendienteFoto = n.id; $("#camIn").click(); }}, IC.cam()),
+      el("button",{"aria-label":"Agregar fotos de la galería",onclick:() => { pendienteFoto = n.id; $("#galIn").click(); }}, IC.img()),
+      el("button",{"aria-label":"Aviso",onclick:() => { sr.classList.remove("hide"); sr.scrollIntoView({behavior:"smooth",block:"center"}); setTimeout(() => { try { fIn.showPicker(); } catch(e){ fIn.focus(); } }, 300); }}, IC.bell())),
+    done));
+}
+
+function verFoto(id){
+  const vw = el("div",{class:"viewer",onclick:() => vw.remove()}, imgEl(id));
+  document.body.append(vw);
+}
+
+async function recibirFotos(files){
+  if (!files || !files.length) return;
+  let n;
+  if (pendienteFoto === "nueva"){ n = nueva({color:"blanco"}); }
+  else n = notas.find(x => x.id === pendienteFoto);
+  pendienteFoto = null;
+  if (!n) return;
+  toast("Guardando foto…");
+  for (const f of files){
+    const id = uid();
+    try { await fotoPut(id, await comprimir(f)); n.fotos.push(id); } catch(e){ toast("No se pudo guardar la foto"); }
+  }
+  await guardarYa(n);
+  toast(files.length > 1 ? files.length + " fotos agregadas" : "Foto agregada");
+  if (ruta().nota === n.id) render(); else ir("n-" + n.id);
+}
+$("#camIn").addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; recibirFotos(f); });
+$("#galIn").addEventListener("change", e => { const f = [...e.target.files]; e.target.value = ""; recibirFotos(f); });
+
+// ---------- ajustes: respaldo ----------
+const blobToData = b => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
+async function exportar(){
+  toast("Preparando respaldo…");
+  const fotos = {};
+  for (const n of notas) for (const id of n.fotos){ const b = await fotoGet(id).catch(() => null); if (b) fotos[id] = await blobToData(b); }
+  const data = JSON.stringify({app:"misnotas", v:1, notas: notas.filter(n => !vacia(n)), fotos});
+  const a = el("a",{href:URL.createObjectURL(new Blob([data],{type:"application/json"})), download:"notas-respaldo-" + new Date().toISOString().slice(0,10) + ".json"});
+  document.body.append(a); a.click(); a.remove();
+}
+async function importar(file, msg){
+  try {
+    const d = JSON.parse(await file.text());
+    if (!d || d.app !== "misnotas" || !Array.isArray(d.notas)) throw 0;
+    for (const id in (d.fotos || {})){ const b = await (await fetch(d.fotos[id])).blob(); await fotoPut(id, b); }
+    for (const n of d.notas){ await dbPut(n); }
+    notas = await dbAll();
+    msg.textContent = ""; toast(d.notas.length + " notas cargadas"); location.hash = "";
+  } catch(e){ msg.textContent = "Ese archivo no es un respaldo de Mis notas."; }
+}
+function vAjustes(v){
+  espiral("ajustes");
+  v.append(el("div",{class:"bar"}, el("button",{class:"ib","aria-label":"Volver",onclick:() => ir("")}, IC.back()), el("span",{class:"brk",style:"text-align:right"}, "[ Respaldo", el("br"), "y avisos ]")));
+  v.append(el("h1",{class:"h1",style:"margin-top:60px"}, "Tus ", el("span",{class:"it",text:"ajustes."})));
+  const fileIn = el("input",{type:"file",accept:".json,application/json",class:"vh"});
+  const msg = el("p",{class:"small",style:"color:#ff8f74;margin:8px 0 0"});
+  fileIn.addEventListener("change", () => { if (fileIn.files[0]) importar(fileIn.files[0], msg); });
+  const nFotos = notas.reduce((a,n) => a + n.fotos.length, 0);
+  v.append(el("div",{class:"card"}, el("h2",{text:"Respaldo"}),
+    el("p",{class:"small muted",style:"margin:0",text:"Tus notas y fotos viven solo en este celular (" + notas.filter(n => !vacia(n)).length + " notas, " + nFotos + " fotos). Descarga un respaldo de vez en cuando y guárdalo en Drive."}),
+    el("div",{class:"btns"}, el("button",{class:"pri",text:"Descargar respaldo",onclick:exportar}), el("label",{class:"btnlike"}, "Cargar respaldo", fileIn)), msg));
+  v.append(el("div",{class:"card"}, el("h2",{text:"Avisos"}),
+    el("p",{class:"small muted",style:"margin:0",text:"Los avisos los hace el calendario de tu celular. Al poner una fecha en una nota, toca “Agregar al calendario” y guarda el evento. Para que suene a la hora exacta, en Google Calendar ve a Configuración → tu cuenta → Notificaciones de eventos y elige “A la hora del evento”."})));
+}
+
+// ---------- inicio ----------
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+(async () => {
+  try { notas = await dbAll(); } catch(e){ notas = []; toast("No se pudo abrir el almacenamiento"); }
+  notas.forEach(n => { n.items = n.items || []; n.fotos = n.fotos || []; if (VIEJOS[n.color]) n.color = VIEJOS[n.color]; if (!COLORES.includes(n.color)) n.color = "blanco"; });
+  if (ruta().nota && !notas.some(n => n.id === ruta().nota)) location.hash = "";
+  render();
+})();
+})();
+</script>
+</body>
+</html>
