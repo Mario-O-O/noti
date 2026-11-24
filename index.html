@@ -9,11 +9,11 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 :root{
   --sans:"Ubuntu",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --serif:"Instrument Serif",Georgia,serif;
+  --serif:"Cormorant Garamond",Georgia,serif;
   --or:#e1502f;
   --bg:#e9e9e6;--ink:#141414;--muted:#7d7d78;--line:#d3d3ce;--acc:var(--or);--soft:rgba(20,20,20,.06);
   --spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.2,.8,.2,1);
@@ -50,7 +50,7 @@ input,textarea,select{font:inherit;color:inherit}
 .word{display:flex;align-items:center;gap:10px}
 .h1{font-size:44px;line-height:1.18;font-weight:300;letter-spacing:-.015em;margin:80px 0 26px;white-space:pre-line;animation:in .7s .1s var(--ease) both}
 .h1 .it{font-size:1.08em;letter-spacing:0}
-.big{display:flex;align-items:flex-end;gap:6px;margin:56px 0 4px;animation:in .7s var(--ease) both}
+.big{display:flex;align-items:flex-start;gap:6px;margin:56px 0 4px;animation:in .7s var(--ease) both}
 .big .n{font-size:112px;line-height:.9;font-weight:300;letter-spacing:-.03em}
 .big .u{font-size:34px;font-weight:300;color:var(--acc);letter-spacing:0;margin:4px 0 0 6px}
 .lead{font-size:26px;line-height:1.3;margin:26px 0 30px;animation:in .7s .15s var(--ease) both}
@@ -161,6 +161,8 @@ html[data-th="negro"] .rem input,html[data-th="naranja"] .rem input{color-scheme
 .card{padding:20px 0;border-bottom:1px solid var(--line);animation:in .5s var(--ease) both}
 .card h2{margin:0 0 10px;font-weight:300;font-size:24px;letter-spacing:0;line-height:1.25}
 .btns{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px}
+.ghin{display:block;width:100%;background:transparent;border:none;border-bottom:1.2px solid var(--ink);padding:9px 0;margin:2px 0 12px;outline:none;font-size:15px}
+label.small{display:block;margin-top:6px}
 .pri,.btnlike{display:inline-flex;align-items:center;gap:10px;font-weight:500;padding:8px 0;cursor:pointer;position:relative}
 .pri::after,.btnlike::after{content:"→"}
 
@@ -306,11 +308,12 @@ function db(){
 }
 async function tx(store, mode, fn){
   const d = await db();
-  return new Promise((res, rej) => { const t = d.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out && out.result !== undefined ? out.result : out); t.onerror = () => rej(t.error); });
+  return new Promise((res, rej) => { const t = d.transaction(store, mode); const st = t.objectStore(store); const out = fn(st); t.oncomplete = () => res(out ? out.result : undefined); t.onerror = () => rej(t.error); });
 }
 const dbAll = () => tx("notas","readonly", s => s.getAll());
-const dbPut = n => tx("notas","readwrite", s => s.put(n));
-const dbDel = id => tx("notas","readwrite", s => s.delete(id));
+let aplicandoRemoto = false;
+const dbPut = n => tx("notas","readwrite", s => s.put(n)).then(r => { if (!aplicandoRemoto) marcarCambio(); return r; });
+const dbDel = id => tx("notas","readwrite", s => s.delete(id)).then(r => { if (!aplicandoRemoto) marcarCambio(); return r; });
 const fotoPut = (id, blob) => tx("fotos","readwrite", s => s.put(blob, id));
 const fotoGet = id => tx("fotos","readonly", s => s.get(id));
 const fotoDel = id => tx("fotos","readwrite", s => s.delete(id));
@@ -320,7 +323,9 @@ let notas = [];
 const urlCache = new Map();
 async function fotoURL(id){
   if (urlCache.has(id)) return urlCache.get(id);
-  const b = await fotoGet(id).catch(() => null); if (!b) return null;
+  let b = await fotoGet(id).catch(() => null);
+  if (!b) b = await ghBajarFoto(id);
+  if (!b) return null;
   const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
 }
 function imgEl(id, cls){
@@ -485,7 +490,6 @@ function vInicio(v){
   const t0 = performance.now(), tot = vis.length;
   (function paso(t){ const k = Math.min(1,(t - t0)/700), e = 1 - Math.pow(1-k,3); numEl.textContent = String(Math.round(tot*e)); if (k < 1) requestAnimationFrame(paso); })(t0);
   v.append(el("p",{class:"lead it",text: hoyN ? "Hoy tienes " + hoyN + (hoyN === 1 ? " aviso." : " avisos.") : vis.length ? "Todo en orden por hoy." : "Empecemos por la primera."}));
-  v.append(el("button",{class:"go",onclick:() => ir("crear")}, cap(), el("span",{text:"Nueva nota, lista, aviso o foto"})));
   const sb = el("div",{class:"search" + (mostrarBusca ? " on" : "")});
   const inp = el("input",{type:"search",placeholder:"Buscar…",value:busca});
   inp.addEventListener("input", () => { busca = inp.value; pintar(); });
@@ -694,11 +698,137 @@ function vAjustes(v){
   fileIn.addEventListener("change", () => { if (fileIn.files[0]) importar(fileIn.files[0], msg); });
   const nFotos = notas.reduce((a,n) => a + n.fotos.length, 0);
   v.append(el("div",{class:"card"}, el("h2",{text:"Respaldo"}),
-    el("p",{class:"small muted",style:"margin:0",text:"Tus notas y fotos viven solo en este celular (" + notas.filter(n => !vacia(n)).length + " notas, " + nFotos + " fotos). Descarga un respaldo de vez en cuando y guárdalo en Drive."}),
+    el("p",{class:"small muted",style:"margin:0",text:"Tus notas y fotos están en este celular (" + notas.filter(n => !vacia(n)).length + " notas, " + nFotos + " fotos). Descarga un respaldo de vez en cuando y guárdalo en Drive."}),
     el("div",{class:"btns"}, el("button",{class:"pri",text:"Descargar respaldo",onclick:exportar}), el("label",{class:"btnlike"}, "Cargar respaldo", fileIn)), msg));
+  const gc = ghCfg() || {};
+  const repoIn = el("input",{class:"ghin",value:gc.repo||"",placeholder:"usuario/finanzas-datos",autocapitalize:"off",autocomplete:"off",spellcheck:"false"});
+  const tokIn = el("input",{class:"ghin",type:"password",value:gc.token||"",placeholder:"github_pat_…",autocomplete:"off"});
+  const gmsg = el("p",{class:"small",style:"margin:8px 0 0"});
+  const conectado = !!(gc.repo && gc.token);
+  const estadoTxt = ghEstado ? ghEstado : conectado ? (gc.pendiente ? "Cambios pendientes por subir" : gc.ultima ? "Sincronizado: " + new Date(gc.ultima).toLocaleString("es-CO",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}) : "Conectado") : "";
+  v.append(el("div",{class:"card"}, el("h2",{}, "Guardar en GitHub ", conectado ? el("span",{class:"hoy",style:"font-size:12px;vertical-align:4px;" + (ghEstado ? "" : "background:#5d7a6a"),text: ghEstado ? "Revisar" : "Activo"}) : null),
+    el("p",{class:"small muted",style:"margin:0 0 12px",text:"Usa el mismo repositorio privado y la misma llave de Mis finanzas. Las notas se guardan en notas.json y las fotos en la carpeta notas-fotos."}),
+    el("label",{class:"small muted",text:"Repositorio privado"}), repoIn,
+    el("label",{class:"small muted",text:"Llave (token)"}), tokIn,
+    el("div",{class:"btns"},
+      el("button",{class:"pri",text: conectado ? "Guardar cambios" : "Conectar",onclick:async () => {
+        const repo = repoIn.value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\/$/,""), token = tokIn.value.trim();
+        if (!/^[\w.-]+\/[\w.-]+$/.test(repo)){ gmsg.textContent = "Escribe el repositorio como usuario/nombre."; return; }
+        if (!token){ gmsg.textContent = "Pega la llave."; return; }
+        gmsg.textContent = "Conectando…";
+        try {
+          const c = {repo, token, sha:null, pendiente:false};
+          const rem = await ghLeer(c);
+          ghSet(Object.assign(c, {sha: rem ? rem.sha : null})); ghEstado = "";
+          const cambio = await ghBajar(false); if (!cambio) await ghSubir();
+          toast("Conectado a GitHub"); render();
+        } catch(e){ gmsg.textContent = ghError(e); }
+      }}),
+      conectado ? el("button",{class:"btnlike",text:"Sincronizar ahora",onclick:async () => { gmsg.textContent = "Sincronizando…"; const cambio = await ghBajar(false); if (!cambio) await ghSubir(); render(); }}) : null,
+      conectado ? el("button",{class:"btnlike",style:"color:var(--muted)",text:"Desconectar",onclick:() => { try { localStorage.removeItem(K_GH); } catch(e){} ghEstado = ""; render(); toast("Desconectado de GitHub"); }}) : null),
+    estadoTxt ? el("p",{class:"small " + (ghEstado ? "" : "muted"),style:"margin:10px 0 0;" + (ghEstado ? "color:#b23a22" : ""),text:estadoTxt}) : null,
+    gmsg));
   v.append(el("div",{class:"card"}, el("h2",{text:"Avisos"}),
     el("p",{class:"small muted",style:"margin:0",text:"Los avisos los hace el calendario de tu celular. Al poner una fecha en una nota, toca “Agregar al calendario” y guarda el evento. Para que suene a la hora exacta, en Google Calendar ve a Configuración → tu cuenta → Notificaciones de eventos y elige “A la hora del evento”."})));
 }
+
+// ---------- sincronización con GitHub (mismo repositorio privado que finanzas) ----------
+const K_GH = "notas:github", K_TS = "notas:guardado", K_SUB = "notas:fotos-subidas";
+const ghCfg = () => { try { return JSON.parse(localStorage.getItem(K_GH) || "null"); } catch(e){ return null; } };
+const ghSet = c => { try { localStorage.setItem(K_GH, JSON.stringify(c)); } catch(e){} };
+const tsLocal = () => { try { return localStorage.getItem(K_TS) || ""; } catch(e){ return ""; } };
+const subidas = () => { try { return new Set(JSON.parse(localStorage.getItem(K_SUB) || "[]")); } catch(e){ return new Set(); } };
+const guardarSubidas = st => { try { localStorage.setItem(K_SUB, JSON.stringify([...st])); } catch(e){} };
+let ghEstado = "", ghTimer = null, ghOcupado = false;
+function marcarCambio(){
+  try { localStorage.setItem(K_TS, new Date().toISOString()); } catch(e){}
+  const c = ghCfg(); if (!c || !c.token) return;
+  c.pendiente = true; ghSet(c);
+  clearTimeout(ghTimer); ghTimer = setTimeout(ghSubir, 4000);
+}
+const b64enc = bytes => { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = b => Uint8Array.from(atob(b.replace(/\s/g,"")), c => c.charCodeAt(0));
+async function ghApi(c, ruta, method, body, raw){
+  const r = await fetch("https://api.github.com/repos/" + c.repo + "/contents/" + ruta, {method, cache:"no-store",
+    headers:{"Authorization":"Bearer " + c.token, "Accept": raw ? "application/vnd.github.raw" : "application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"},
+    body: body ? JSON.stringify(body) : undefined});
+  if (r.status === 404 && method === "GET") return null;
+  if (!r.ok){ const e = new Error("GitHub " + r.status); e.status = r.status; throw e; }
+  return raw ? r.blob() : r.json();
+}
+function ghError(e){
+  if (!navigator.onLine) return "Sin internet: se sube cuando vuelvas a tener conexión";
+  if (e.status === 401) return "La llave no sirve o venció. Crea una nueva";
+  if (e.status === 403 || e.status === 404) return "Sin permiso: revisa el repositorio y los permisos de la llave";
+  return "No se pudo sincronizar (" + (e.message || "error") + ")";
+}
+async function ghLeer(c){
+  const r = await ghApi(c, "notas.json", "GET");
+  if (!r) return null;
+  return {sha: r.sha, data: JSON.parse(new TextDecoder().decode(b64dec(r.content)))};
+}
+async function ghSubirFotos(c){
+  const ya = subidas();
+  for (const n of notas) for (const id of n.fotos){
+    if (ya.has(id)) continue;
+    const b = await fotoGet(id).catch(() => null); if (!b) continue;
+    const ruta = "notas-fotos/" + id + ".jpg";
+    let sha; try { const ex = await ghApi(c, ruta, "GET"); sha = ex && ex.sha; } catch(e){}
+    if (!sha) await ghApi(c, ruta, "PUT", {message:"Foto de nota", content: b64enc(new Uint8Array(await b.arrayBuffer()))});
+    ya.add(id); guardarSubidas(ya);
+  }
+}
+async function ghBajarFoto(id){
+  const c = ghCfg(); if (!c || !c.token || !navigator.onLine) return null;
+  try { const b = await ghApi(c, "notas-fotos/" + id + ".jpg", "GET", null, true); if (b){ await fotoPut(id, b); const st = subidas(); st.add(id); guardarSubidas(st); } return b; }
+  catch(e){ return null; }
+}
+async function ghSubir(){
+  const c = ghCfg(); if (!c || !c.token || ghOcupado) return;
+  if (!navigator.onLine){ ghEstado = "Sin internet: se sube cuando vuelvas a tener conexión"; return; }
+  ghOcupado = true;
+  try {
+    await ghSubirFotos(c);
+    const payload = {app:"misnotas", v:1, notas: notas.filter(n => !vacia(n)), guardadoEn: tsLocal()};
+    const put = sha => ghApi(c, "notas.json", "PUT", {message:"Notas actualizadas " + new Date().toLocaleString("es-CO"), content: b64enc(new TextEncoder().encode(JSON.stringify(payload, null, 1))), sha: sha || undefined});
+    let res;
+    try { res = await put(c.sha); }
+    catch(e){ if (e.status === 409 || e.status === 422){ const rem = await ghLeer(c); res = await put(rem && rem.sha); } else throw e; }
+    c.sha = res.content.sha; c.ultima = new Date().toISOString(); c.pendiente = false; ghSet(c); ghEstado = "";
+  } catch(e){ c.pendiente = true; ghSet(c); ghEstado = ghError(e); }
+  finally { ghOcupado = false; if (ruta().ajustes) render(); }
+}
+// trae las notas del servidor si son más nuevas que las del celular
+async function ghBajar(silencioso){
+  const c = ghCfg(); if (!c || !c.token || ghOcupado || !navigator.onLine) return false;
+  ghOcupado = true;
+  try {
+    const rem = await ghLeer(c);
+    if (!rem){ ghOcupado = false; await ghSubir(); return false; }
+    c.sha = rem.sha; ghSet(c);
+    const remTs = rem.data.guardadoEn || "", locTs = tsLocal();
+    const localVacio = !notas.some(n => !vacia(n));
+    if (Array.isArray(rem.data.notas) && (localVacio || (remTs > locTs && !c.pendiente))){
+      aplicandoRemoto = true;
+      const ids = new Set(rem.data.notas.map(n => n.id));
+      for (const n of notas) if (!ids.has(n.id)) await dbDel(n.id);
+      for (const n of rem.data.notas) await dbPut(n);
+      aplicandoRemoto = false;
+      notas = await dbAll();
+      notas.forEach(n => { n.items = n.items || []; n.fotos = n.fotos || []; });
+      try { localStorage.setItem(K_TS, remTs || new Date().toISOString()); } catch(e){}
+      const st = subidas(); notas.forEach(n => n.fotos.forEach(id => st.add(id))); guardarSubidas(st);   // las fotos remotas ya están en GitHub
+      c.ultima = new Date().toISOString(); ghSet(c); ghEstado = "";
+      if (!silencioso) toast("Notas actualizadas desde GitHub");
+      ghOcupado = false; if (!ruta().nota) render(); return true;
+    }
+    ghOcupado = false;
+    if (c.pendiente || locTs > remTs) await ghSubir();
+    return false;
+  } catch(e){ aplicandoRemoto = false; ghEstado = ghError(e); ghOcupado = false; return false; }
+}
+window.addEventListener("online", () => { const c = ghCfg(); if (c && c.pendiente) ghSubir(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !ruta().nota) ghBajar(true); });
 
 // ---------- inicio ----------
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
@@ -707,6 +837,7 @@ if ("serviceWorker" in navigator && location.protocol === "https:") navigator.se
   notas.forEach(n => { n.items = n.items || []; n.fotos = n.fotos || []; if (VIEJOS[n.color]) n.color = VIEJOS[n.color]; if (!COLORES.includes(n.color)) n.color = "blanco"; });
   if (ruta().nota && !notas.some(n => n.id === ruta().nota)) location.hash = "";
   render();
+  const c = ghCfg(); if (c && c.token) ghBajar(true);
 })();
 })();
 </script>
