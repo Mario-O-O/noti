@@ -142,6 +142,8 @@ html[data-th="negro"] .rem input,html[data-th="naranja"] .rem input{color-scheme
 .rsel{border:none;background:transparent;outline:none;font-weight:500;text-align:right;padding:0;appearance:none;-webkit-appearance:none;cursor:pointer}
 .rsel option{color:#141414}
 .rem .cal{width:100%;margin-top:12px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border-radius:99px}
+@keyframes llama{0%,100%{box-shadow:0 0 0 0 rgba(225,80,47,0)}40%{box-shadow:0 0 0 8px rgba(225,80,47,.35)}}
+.rem .cal.llama{animation:llama .9s var(--ease) 2}
 .rem .alt{display:flex;justify-content:space-between;gap:8px;margin-top:4px}
 .rem .alt button{padding:6px 0;font-size:12.5px;color:var(--muted)}
 .rem p{font-size:12.5px;color:var(--muted);margin:8px 0 0}
@@ -422,7 +424,7 @@ function linkAndroid(n){
   const ini = new Date(n.fecha + "T" + (n.hora || "09:00")).getTime();
   const enc = s => encodeURIComponent(s).replace(/;/g,"%3B");
   return "intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;" +
-    "S.title=" + enc(n.titulo || "Recordatorio") + ";S.description=" + enc(detalles(n)) + ";l.beginTime=" + ini + ";l.endTime=" + (ini + 30*60000) + (RRULE[n.repite] ? ";S.rrule=" + enc(RRULE[n.repite]) : "") +
+    "S.title=" + enc(n.titulo || "Recordatorio") + ";S.description=" + enc(detalles(n)) + ";l.beginTime=" + ini + ";l.endTime=" + (ini + 30*60000) + (RRULE[n.repite] ? ";S.rrule=" + enc(RRULE[n.repite]) : "") + ";i.hasAlarm=1;i.availability=0" +
     ";S.browser_fallback_url=" + enc(linkGoogle(n)) + ";end";
 }
 function abrir(url){ const a = el("a",{href:url,target:"_blank",rel:"noopener"}); document.body.append(a); a.click(); a.remove(); }
@@ -526,7 +528,7 @@ function vInicio(v){
 function fila(n, i){
   const c = cuando(n);
   let meta;
-  if (c) meta = el("small",{}, c.hoy && !c.paso ? el("span",{class:"hoy",text:c.txt}) : c.txt, c.rep ? " · ↻ " + c.rep.toLowerCase() : "");
+  if (c) meta = el("small",{}, c.hoy && !c.paso ? el("span",{class:"hoy",text:c.txt}) : c.txt, c.rep ? " · ↻ " + c.rep.toLowerCase() : "", !n.enCalendario && !c.paso ? el("span",{style:"color:var(--or)",text:" · sin calendario"}) : null);
   else if (n.items.length) meta = el("small",{text:n.items.filter(x => x.ok).length + " de " + n.items.length + " listos"});
   else meta = el("small",{text:(n.titulo ? n.texto : n.texto.split("\n").slice(1).join(" ")).replace(/\n/g," ").trim() || (n.fotos.length ? n.fotos.length + (n.fotos.length === 1 ? " foto" : " fotos") : "Nota")});
   const ar = cap();
@@ -655,7 +657,15 @@ function vEditor(v, n){
     n.fotos.forEach(id => fotoDel(id)); await dbDel(n.id); notas = notas.filter(x => x !== n); toast("Nota borrada"); location.hash = ""; }});
   v.append(del);
 
-  const done = el("button",{class:"done",onclick:() => { vib(10); done.firstChild.textContent = "Guardado"; setTimeout(() => { location.hash = ""; }, 350); }}, el("span",{text:"Listo"}), cap());
+  const done = el("button",{class:"done",onclick:() => {
+    const c2 = cuando(n);
+    if (n.fecha && !n.enCalendario && c2 && !c2.paso && !done.dataset.av){
+      done.dataset.av = "1"; vib([10,40,10]);
+      toast("Agrégalo al calendario para que te avise");
+      const cb = v.querySelector(".rem .cal"); if (cb){ cb.scrollIntoView({behavior:"smooth",block:"center"}); cb.classList.remove("llama"); void cb.offsetWidth; cb.classList.add("llama"); }
+      done.firstChild.textContent = "Salir igual"; return;
+    }
+    vib(10); done.firstChild.textContent = "Guardado"; setTimeout(() => { location.hash = ""; }, 350); }}, el("span",{text:"Listo"}), cap());
   document.body.append(el("div",{class:"edbar"},
     el("div",{class:"l"},
       el("button",{"aria-label":"Agregar lista",onclick:() => { sl.classList.remove("hide"); if (!n.items.length){ n.items.push({t:"", ok:false}); guardar(n); } pintarItems(n.items.length-1); sl.scrollIntoView({behavior:"smooth",block:"center"}); }}, IC.list()),
