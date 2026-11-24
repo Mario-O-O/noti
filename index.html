@@ -106,7 +106,7 @@ input,textarea,select{font:inherit;color:inherit}
 .etitle{width:100%;border:none;background:transparent;outline:none;resize:none;font-size:40px;line-height:1.2;font-weight:300;letter-spacing:-.01em;margin:56px 0 20px;padding:0;overflow:hidden;color:var(--ink)}
 .ebody{width:100%;border:none;background:transparent;outline:none;resize:none;font-size:16.5px;line-height:1.65;padding:0;min-height:80px;overflow:hidden;color:var(--ink);opacity:.85}
 .copyw{display:flex;justify-content:flex-end;margin-top:4px}
-.copy{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border:1.2px solid var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.02em}
+.copy{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:1.2px solid var(--line);color:var(--muted);font-size:12.5px;letter-spacing:.02em}
 .copy svg{width:15px;height:15px}
 .copy.hecho{color:var(--acc);border-color:var(--acc)}
 .etitle::placeholder,.ebody::placeholder{color:var(--muted);opacity:.7}
@@ -593,9 +593,9 @@ function vEditor(v, n){
     try { await navigator.clipboard.writeText(txt); }
     catch(e){ b.select(); document.execCommand("copy"); b.setSelectionRange(b.value.length, b.value.length); b.blur(); }
     vib(10); toast("Texto copiado");
-    copiar.replaceChildren(IC.ok(), el("span",{text:"Copiado"})); copiar.classList.add("hecho");
-    setTimeout(() => { copiar.replaceChildren(IC.copy(), el("span",{text:"Copiar"})); copiar.classList.remove("hecho"); }, 1400);
-  }}, IC.copy(), el("span",{text:"Copiar"}));
+    copiar.replaceChildren(IC.ok()); copiar.classList.add("hecho");
+    setTimeout(() => { copiar.replaceChildren(IC.copy()); copiar.classList.remove("hecho"); }, 1400);
+  }}, IC.copy());
   b.addEventListener("input", () => { n.texto = b.value; auto(b); guardar(n); copiar.classList.toggle("hide", !b.value.trim()); });
   v.append(t, b, el("div",{class:"copyw"}, copiar)); requestAnimationFrame(() => { auto(t); auto(b); if (vacia(n) || (!n.titulo && Date.now() - n.creada < 15000)) t.focus(); });
 
